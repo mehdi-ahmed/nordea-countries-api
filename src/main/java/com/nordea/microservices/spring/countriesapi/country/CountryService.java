@@ -29,10 +29,6 @@ public class CountryService {
                 .build();
     }
 
-    private static void retryMechanismLog(Retry.RetrySignal retrySignal) {
-        log.warn("Retrying... attempt {}/{}", retrySignal.totalRetries() + 1, 3);
-    }
-
     public Mono<Country[]> getCountryByName(String name) {
         return webClient.get()
                 .uri("/name/{name}", name)
@@ -65,12 +61,11 @@ public class CountryService {
 
                     if (throwable instanceof WebClientResponseException ||
                             throwable instanceof AsyncRequestTimeoutException) {
-                        // pseudo circuit-breaker when there is a HTTP 5XX exception(SSL Handshake, timeOut, etc.)
+                        // pseudo circuit-breaker when there is a timeOut. // todo implement a real circuit-breaker
                         return Flux.fromIterable(imaginaryCountriesCircuitBreakFallback());
                     }
                     return Flux.error(throwable);
                 });
-
     }
 
     public List<Country> imaginaryCountriesCircuitBreakFallback() {
@@ -90,5 +85,9 @@ public class CountryService {
                 .capital("Birnin Zana")
                 .build();
         return Arrays.asList(narnia, wakanda);
+    }
+
+    private static void retryMechanismLog(Retry.RetrySignal retrySignal) {
+        log.warn("Retrying... attempt {}/{}", retrySignal.totalRetries() + 1, 3);
     }
 }
